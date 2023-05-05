@@ -1,0 +1,1 @@
+The program collects real-time image data from the onboard camera of the RB1 device, conducts 3d detection of the cup in the image through the deep learning algorithm, and pushes to the rtsp video stream after drawing the result.

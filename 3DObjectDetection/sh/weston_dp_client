@@ -1,0 +1,54 @@
+#!/bin/sh
+
+echo "=====Configure Weston environment====="
+mount -o remount,rw /
+killall weston
+#mkdir /usr/bin/weston_socket
+export XDG_RUNTIME_DIR=/dev/socket/weston
+#mkdir --parents XDG_RUNTIME_DIR
+chmod 0700 $XDG_RUNTIME_DIR
+cd /usr/bin
+./weston --tty=1 --device=msm_drm --idle-time=0 &
+sleep  2 
+
+echo "=====Show the Weston flower====="
+sleep  1 
+sh weston-flower &
+sleep  3 
+
+if [[ $1 = "helmet" ]]; then
+    cd /data/HelmetDetect
+    echo "=====Show the helmet detection====="                                 
+    sleep  1                                                               
+    ./pose_detection --config_file ./pb_conf/gst_conf.meta --model_file ./pb_conf/aiconf.meta &
+    sleep  1800                                 
+    killall pose_detection
+elif [[ $1 = "qmmf" ]]; then              
+    echo "=====Show the qtiqmmf pipeline====="                             
+    sleep  1                                                               
+    gst-launch-1.0 -e qtiqmmfsrc name=qmmf ! video/x-h264,format=NV12,framerate=30/1,width=640,height=480 ! h264parse config-interval=1 ! tee name=testtee ! queue ! \
+        qtivdec ! video/x-raw\(memory:GBM\),compression=ubwc ! waylandsink fullscreen=true \
+        testtee. ! queue ! qtivdec ! qtivtransform ! video/x-raw,format=BGRA ! fakesink
+    sleep  60                                 
+    killall gst-launch-1.0                    
+elif [[ $1 = "mixer" ]]; then                                                                                                                                         
+    echo "=====Show the mixer pipeline====="                                                                                                                          
+    sleep  1                                                                              
+    gst-launch-1.0 -e videomixer name=mix sink_1::xpos=200 sink_1::ypos=260 sink_1::alpha=1 sink_2::xpos=600 sink_2::ypos=260 ! videoconvert ! waylandsink fullscreen=true \
+        filesrc location="/data/plout.jpeg" ! jpegdec ! textoverlay font-desc="Sans 26" text="Live from Pluto" halignment=left shaded-background=false auto-resize=false ! imagefreeze ! mix. \
+        videotestsrc pattern=0 ! video/x-raw,framerate=10/1, width=350, height=250 ! mix.sink_1 \
+        filesrc location="/data/demo.mp4" name=filetest ! qtdemux name=demux ! tee name=testtee ! queue ! \
+            decodebin ! videoscale ! videoconvert ! video/x-raw,width=350,height=250,framerate=30/1 ! mix.sink_2                                                            
+    sleep  20                                                                                                                                                                                  
+    killall gst-launch-1.0                                                                                                                                                                     
+else                                                                                                       
+    echo "=====Missing parameter====="                                                                          
+    sleep  2                                                                                                    
+    gst-launch-1.0 filesrc location=/data/demo.mp4 ! qtdemux name=demux demux. ! tee name=testtee ! queue ! \
+        h264parse ! qtivdec ! video/x-raw\(memory:GBM\),compression=ubwc ! waylandsink fullscreen=true
+    sleep 40                          
+    killall gst-launch-1.0            
+fi
+
+echo "=====Turn off  Weston display====="
+killall weston

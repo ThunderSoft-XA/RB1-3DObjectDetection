@@ -1,0 +1,4 @@
+/home/thundersoft/Desktop/2023/AI_RB2/gst_component/build/CMakeFiles/edit_cache.dir
+/home/thundersoft/Desktop/2023/AI_RB2/gst_component/build/CMakeFiles/rebuild_cache.dir
+/home/thundersoft/Desktop/2023/AI_RB2/gst_component/build/CMakeFiles/camera2appsink.dir
+/home/thundersoft/Desktop/2023/AI_RB2/gst_component/build/CMakeFiles/appsrc2udpsink.dir

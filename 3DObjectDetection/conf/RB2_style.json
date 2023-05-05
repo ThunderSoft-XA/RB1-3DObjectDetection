@@ -1,0 +1,40 @@
+{
+    "node": [
+        {
+            "name": "dataSource",
+            "type": "gst",
+            "input": "camera",
+            "output": [
+                "transfomer_style.input"
+            ]
+        },
+        {
+            "name": "pre_style",
+            "type": "tflite",
+            "input": [
+                "./style.png"
+            ],
+            "output": [
+                "transfomer_style.input"
+            ]
+        },
+        {
+            "name": "transfomer_style",
+            "type": "tflite",
+            "input": [
+                "dataSource.output",
+                "pre_style.output"
+            ],
+            "output": [
+                "show.input"
+            ]
+        },
+        {
+            "name": "show",
+            "type": "rtsp",
+            "input": [
+                "transfomer_style.otput"
+            ]
+        }
+    ]
+}

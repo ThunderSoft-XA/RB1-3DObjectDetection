@@ -1,0 +1,91 @@
+1080p@30 H264
+gst-launch-1.0 -e qtiqmmfsrc camera=0 \
+    ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 \
+    ! qtic2venc ! h264parse ! mp4mux ! queue \
+    ! filesink location=/data/mux.mp4
+
+1080p@30 H265
+gst-launch-1.0 -e qtiqmmfsrc camera=0 \
+    ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 \
+    ! qtic2venc ! h265parse ! mp4mux ! queue \
+    ! filesink location=/data/mux.mp4
+
+gst-launch-1.0 -e qtiqmmfsrc camera=0 name=qmmf \
+    ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 \
+    ! qtic2venc ! h264parse config-interval=-1 ! rtph264pay pt=96 \
+    ! udpsink host=192.168.0.1 port=8554
+
+gst-launch-1.0 -e qtiqmmfsrc camera=2 name=qmmf ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 ! qtic2venc ! h264parse config-interval=-1 ! rtph264pay pt=96 ! udpsink host=192.168.0.1 port=8554
+
+gst-launch-1.0 -e qtiqmmfsrc camera=0 \
+    ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 \
+    ! qtic2venc ! h264parse config-interval=-1 ! tee name=tee ! queue ! mp4mux ! queue \
+    ! filesink location=/data/mux.mp4 tee. ! queue ! rtph264pay pt=96 \
+    ! udpsink host=192.168.0.1 port=8554 tee. ! queue ! qtivdec \
+    ! video/x-raw\(memory:GBM\),compression=ubwc \
+    ! waylandsink fullscreen=true 
+
+#rtsp server
+gst-rtsp-server -a 192.168.0.1 -p 8901 -m /live \
+    "( udpsrc host=192.168.0.1 name=pay0 port=8555 \
+    caps=\"application/x-rtp,media=video,
+    clock-rate=90000,encoding-name=H264,payload=96\" )"
+# rtsp pipeline
+gst-launch-1.0 -e qtiqmmfsrc camera=0 name=qmmf \
+    ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 \
+    ! qtic2venc ! h264parse config-interval=-1 ! rtph264pay pt=97 \
+    ! udpsink host=127.0.0.1 port=8555 &
+
+
+gst-launch-1.0 -e qtiqmmfsrc camera=1 name=qmmf1 \
+    ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 \
+    ! qtic2venc ! h264parse config-interval=-1 ! rtph264pay pt=96 \
+    ! udpsink host=127.0.0.1 port=8556 &
+
+#tcp
+adb forward tcp:8900 tcp:8900
+gst-launch-1.0 -e qtiqmmfsrc camera=0 name=qmmf ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 ! qtic2venc ! h264parse  config-interval=1 ! mpegtsmux name=muxer ! queue ! tcpserversink port=8900 host=127.0.0.1
+
+vlc -vvv tcp://127.0.0.1:8900
+
+gst-launch-1.0 -e qtiqmmfsrc camera=0 name=qmmf ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 qtic2venc ! h264parse config-interval=-1 !  video/x-h264,stream-format=(string)avc ! flvmux ! rtmpsink location='rtmp://127.0.0.1:1935/live/mask/p1'
+
+gst-launch-1.0 -e qtiqmmfsrc camera=0 name=qmmf \
+    ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 \
+    ! qtic2venc ! h264parse config-interval=-1 ! rtph264pay pt=96 \
+    ! tcpsink host=127.0.0.1 port=10000
+
+
+ffmpeg4 -re -i udp://192.168.0.1:10000 -vcodec copy -f rtsp -rtsp_transport tcp rtsp://192.168.0.1/live/test
+
+gst-launch-1.0 -e qtiqmmfsrc camera=0 name=qmmf \
+    ! video/x-raw\(memory:GBM\),format=NV12,width=1920,height=1080,framerate=30/1 \
+    ! qtic2venc ! h264parse config-interval=-1 ! rtph264pay pt=96 \
+    ! udpsink host=192.168.0.1 port=10000
+
+没有 rtsp
+可用方案：
+gst-launch-1.0 -e qtiqmmfsrc camera=0 name=qmmf ! video/x-raw\(memory:GBM\),format=NV12,width=640,height=480,framerate=30/1 ! qtic2venc ! h264parse  config-interval=1 ! mpegtsmux name=muxer ! queue ! udpsink port=8900 host=192.168.0.1
+gst-launch-1.0 -e qtiqmmfsrc camera=1 name=qmmf ! video/x-raw\(memory:GBM\),format=NV12,width=640,height=480,framerate=30/1 ! qtic2venc ! h264parse  config-interval=1 ! mpegtsmux name=muxer ! queue ! udpsink port=8901 host=192.168.0.1
+
+./MediaServer &
+
+ffmpeg4 -re -i udp://192.168.0.1:8900 -vcodec copy -f rtsp -rtsp_transport tcp rtsp://127.0.0.1:554/live/test &
+ffmpeg4 -re -i udp://192.168.0.1:8901 -vcodec copy -f rtsp -rtsp_transport tcp rtsp://127.0.0.1:554/live/test1 &
+
+
+gst-launch-1.0 -e qtiqmmfsrc camera=0 name=qmmf ! video/x-raw\(memory:GBM\),format=NV12,width=640,height=480,framerate=30/1 ! \
+    qtic2venc ! h264parse  config-interval=1 ! mpegtsmux name=muxer ! queue ! rtspclientsink location=rtsp://192.168.0.1:8554/live/test
+
+
+killall hostapd
+killall dnsmasq
+killall dhcpcd
+killall wpa_supplicant
+ifconfig wlan0 192.168.3.1 up
+hostapd -dddd -B /etc/wlan/hostapd.conf
+dnsmasq -i wlan0 -l /data/dnsmasq.leases --no-daemon --no-resolv --no-poll --dhcp-range=192.168.3.100,192.168.3.200,1h &
+
+A:id=0,psize=1920x1080,pformat=yuv_ubwc,vsize=1920x1080,ssize=1920x1080,sformat=jpeg,fpsrange=30-30
+A:id=1,psize=1920x1080,pformat=yuv_ubwc,vsize=1920x1080,ssize=1920x1080,sformat=jpeg,fpsrange=30-30
+

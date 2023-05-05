@@ -1,0 +1,8 @@
+/home/thundersoft/Desktop/2023/AI_RB2/inference/build/CMakeFiles/install/strip.dir
+/home/thundersoft/Desktop/2023/AI_RB2/inference/build/CMakeFiles/install/local.dir
+/home/thundersoft/Desktop/2023/AI_RB2/inference/build/CMakeFiles/install.dir
+/home/thundersoft/Desktop/2023/AI_RB2/inference/build/CMakeFiles/style_transfer.dir
+/home/thundersoft/Desktop/2023/AI_RB2/inference/build/CMakeFiles/list_install_components.dir
+/home/thundersoft/Desktop/2023/AI_RB2/inference/build/CMakeFiles/inference.dir
+/home/thundersoft/Desktop/2023/AI_RB2/inference/build/CMakeFiles/edit_cache.dir
+/home/thundersoft/Desktop/2023/AI_RB2/inference/build/CMakeFiles/rebuild_cache.dir

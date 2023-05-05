@@ -1,0 +1,33 @@
+{
+    "gstreamer": {
+        "cameras": [
+            {
+                "pipe_name": "camera-pipe",
+                "camera_id": 0,
+                "width": 640,
+                "height": 480,
+                "framerate": 25,
+                "display": false
+            }
+        ],
+        "streams": [
+            {
+                "pipe_name": "push-pipe",
+                "width": 640,
+                "height": 480,
+                "framerate": 25,
+                "host": "192.168.3.1",
+                "port": 554
+            }
+        ]
+    },
+    "inference": [
+        {
+            "model_path": "./traffic_sign_yolov5-fp16.tflite",
+            "labels_path": "./labels.txt",
+            "confThreshold": 0.25,
+            "nmsThreshold": 0.45,
+            "results": 5
+        }
+    ]
+}
